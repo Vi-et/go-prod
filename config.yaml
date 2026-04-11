@@ -1,0 +1,24 @@
+# config.yaml
+port: 4000
+env: production
+
+db:
+  dsn: postgres://greenlight:pa55word@localhost/greenlight?sslmode=disable
+  max_open_conns: 25
+  max_idle_conns: 25
+  max_idle_time: 15m
+
+limiter:
+  rps: 2
+  burst: 4
+  enabled: true
+
+smtp:
+  host: smtp.mailtrap.io
+  port: 25
+  username: "882137d06e7d98"
+  password: "0efa52b51f92cb"
+  sender: "Greenlight <no-reply@greenlight.alexedwards.net>"
+
+cors:
+  trusted_origins: []

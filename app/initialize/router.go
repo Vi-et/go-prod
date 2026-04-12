@@ -1,13 +1,21 @@
 package initialize
 
 import (
+	"expvar"
 	"go-production/app/controller"
+	"go-production/app/middleware"
 
 	"github.com/gin-gonic/gin"
 )
 
 func InitRouter() *gin.Engine {
 	r := gin.Default()
+
+	// Apply metrics middleware
+	r.Use(middleware.MetricsMiddleware())
+
+	// Expose expvar metrics
+	r.GET("/debug/vars", gin.WrapH(expvar.Handler()))
 
 	// Khởi tạo controller
 	movieCtrl := controller.NewMovieController()

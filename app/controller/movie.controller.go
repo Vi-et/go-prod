@@ -2,11 +2,11 @@ package controller
 
 import (
 	"net/http"
-	"strconv"
 
+	"go-production/app/filters"
 	"go-production/app/helpers"
+	"go-production/app/model"
 	"go-production/global"
-	"go-production/internal/model"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,43 +20,41 @@ func NewMovieController() *MovieController {
 // ListMovies xử lý GET /v1/movies?page=1&page_size=10
 func (mc *MovieController) ListMovies(c *gin.Context) {
 	// 1. Lấy thông tin phân trang từ query string
-	pageStr := c.DefaultQuery("page", "1")
-	pageSizeStr := c.DefaultQuery("page_size", "10")
 
-	page, err := strconv.Atoi(pageStr)
-	if err != nil || page <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "bad request"})
-		return
-	}
-
-	pageSize, err := strconv.Atoi(pageSizeStr)
-	if err != nil || pageSize <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "bad request"})
+	f := filters.MovieFilter{}
+	v := helpers.Validator{}
+	p := helpers.Pagination{}
+	f.GetParams(c, &v)
+	if !v.Valid() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": v.Errors})
 		return
 	}
 
 	var movies []model.Movie
 	var totalRecords int64
 
-	// 2. Đếm tổng số bản ghi
-	if err := global.DB.Model(&model.Movie{}).Count(&totalRecords).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "không thể đếm số lượng phim"})
+	// 2. Xây dựng câu lệnh query với filters
+	query := global.DB.Model(&model.Movie{})
+	query = f.Apply(query)
+
+	// 3. Đếm tổng số bản ghi sau khi lọc
+	if err := query.Count(&totalRecords).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "không thể thống kê số lượng phim"})
 		return
 	}
 
-	// 3. Truy vấn dữ liệu với phân trang
-	offset := (page - 1) * pageSize
-	if err := global.DB.Limit(pageSize).Offset(offset).Find(&movies).Error; err != nil {
+	// 4. Truy vấn dữ liệu với phân trang
+	if err := query.Limit(p.PageSize).Offset(p.Offset).Find(&movies).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "không thể lấy danh sách phim"})
 		return
 	}
 
 	// 4. Tính toán Metadata bằng hàm global
-	metadata := helpers.CalculateMetadata(totalRecords, page, pageSize)
+	p.CalculateMetadata(totalRecords)
 
 	// 5. Trả về kết quả JSON kèm metadata
 	c.JSON(http.StatusOK, gin.H{
-		"metadata": metadata,
+		"metadata": p.Metadata,
 		"movies":   movies,
 	})
 }

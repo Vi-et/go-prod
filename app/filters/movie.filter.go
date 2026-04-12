@@ -11,12 +11,12 @@ import (
 type MovieFilter struct {
 	Title      string
 	Genres     string
-	Year       int
-	YearGTE    int
-	YearLTE    int
-	Runtime    int
-	RuntimeGTE int
-	RuntimeLTE int
+	Year       *int
+	YearGTE    *int
+	YearLTE    *int
+	Runtime    *int
+	RuntimeGTE *int
+	RuntimeLTE *int
 }
 
 func (f *MovieFilter) GetParams(c *gin.Context, v *helpers.Validator) {
@@ -37,22 +37,22 @@ func (f *MovieFilter) Apply(db *gorm.DB) *gorm.DB {
 	if f.Genres != "" {
 		db = db.Where("genres @> ?", pq.Array(f.Genres))
 	}
-	if f.Year != 0 {
+	if f.Year != nil {
 		db = db.Where("year = ?", f.Year)
 	}
-	if f.YearGTE != 0 {
+	if f.YearGTE != nil {
 		db = db.Where("year >= ?", f.YearGTE)
 	}
-	if f.YearLTE != 0 {
+	if f.YearLTE != nil {
 		db = db.Where("year <= ?", f.YearLTE)
 	}
-	if f.Runtime != 0 {
+	if f.Runtime != nil {
 		db = db.Where("runtime = ?", f.Runtime)
 	}
-	if f.RuntimeGTE != 0 {
+	if f.RuntimeGTE != nil {
 		db = db.Where("runtime >= ?", f.RuntimeGTE)
 	}
-	if f.RuntimeLTE != 0 {
+	if f.RuntimeLTE != nil {
 		db = db.Where("runtime <= ?", f.RuntimeLTE)
 	}
 	return db

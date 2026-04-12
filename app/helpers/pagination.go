@@ -15,23 +15,25 @@ type Metadata struct {
 }
 
 type Pagination struct {
-	Page     int
-	PageSize int
+	Page     *int
+	PageSize *int
 	Offset   int
 	Metadata
 }
 
-func (p *Pagination) ReadPaginationParams(c *gin.Context, v *Validator) {
+func (p *Pagination) GetParams(c *gin.Context, v *Validator) {
 	p.Page = GetIntParam(c, v, "page")
 	p.PageSize = GetIntParam(c, v, "pageSize")
 
-	if p.Page <= 0 {
-		p.Page = 1
+	if p.Page == nil || *p.Page <= 0 {
+		defaultPage := 1
+		p.Page = &defaultPage
 	}
-	if p.PageSize <= 0 {
-		p.PageSize = 10
+	if p.PageSize == nil || *p.PageSize <= 0 {
+		defaultPageSize := 10
+		p.PageSize = &defaultPageSize
 	}
-	p.Offset = (p.Page - 1) * p.PageSize
+	p.Offset = (*p.Page - 1) * *p.PageSize
 }
 
 // CalculateMetadata giúp tính toán các thông số phân trang nhanh chóng
@@ -40,10 +42,10 @@ func (p *Pagination) CalculateMetadata(totalRecords int64) {
 		return
 	}
 	p.Metadata = Metadata{
-		CurrentPage:  p.Page,
-		PageSize:     p.PageSize,
+		CurrentPage:  *p.Page,
+		PageSize:     *p.PageSize,
 		FirstPage:    1,
-		LastPage:     int(math.Ceil(float64(totalRecords) / float64(p.PageSize))),
+		LastPage:     int(math.Ceil(float64(totalRecords) / float64(*p.PageSize))),
 		TotalRecords: totalRecords,
 	}
 }

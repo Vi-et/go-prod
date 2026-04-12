@@ -2,12 +2,14 @@ package model
 
 import (
 	"context"
+	"errors"
 	"go-production/app/filters"
 	"go-production/app/helpers"
 	"go-production/global"
 	"time"
 
 	"github.com/lib/pq"
+	"gorm.io/gorm"
 )
 
 type Movie struct {
@@ -18,6 +20,13 @@ type Movie struct {
 	Runtime   int32          `json:"runtime,omitempty"`
 	Genres    pq.StringArray `json:"genres,omitempty" gorm:"type:text[]"`
 	Version   int32          `json:"version"`
+}
+
+type InputUpdateMovie struct {
+	Title   *string  `json:"title"`
+	Year    *int32   `json:"year"`
+	Runtime *int32   `json:"runtime"`
+	Genres  []string `json:"genres"`
 }
 
 // TableName chỉ định tên bảng cho GORM (mặc định là "movies")
@@ -61,4 +70,52 @@ func (m Movie) Get(id string) (Movie, error) {
 		return movie, err
 	}
 	return movie, nil
+}
+
+func (m Movie) Create(movie *Movie) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	if err := global.DB.WithContext(ctx).Create(movie).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *Movie) Update(input *InputUpdateMovie) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	if input.Title != nil {
+		m.Title = *input.Title
+	}
+	if input.Year != nil {
+		m.Year = *input.Year
+	}
+	if input.Runtime != nil {
+		m.Runtime = *input.Runtime
+	}
+	if input.Genres != nil {
+		m.Genres = input.Genres
+	}
+
+	result := global.DB.WithContext(ctx).
+		Model(m).
+		Where("id = ? AND version = ?", m.ID, m.Version).
+		Updates(map[string]interface{}{
+			"title":   m.Title,
+			"year":    m.Year,
+			"runtime": m.Runtime,
+			"genres":  m.Genres,
+			"version": gorm.Expr("version + 1"),
+		})
+
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("edit conflict")
+	}
+
+	m.Version++
+	return nil
 }

@@ -16,6 +16,8 @@ func InitRouter() *gin.Engine {
 	{
 		v1.GET("/movies", movieCtrl.ListController)
 		v1.GET("/movies/:id", movieCtrl.GetController)
+		v1.PATCH("/movies/:id", movieCtrl.UpdateController)
+		v1.POST("/movies", movieCtrl.CreateController)
 	}
 
 	return r

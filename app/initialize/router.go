@@ -15,6 +15,7 @@ func InitRouter() *gin.Engine {
 	v1 := r.Group("/v1")
 	{
 		v1.GET("/movies", movieCtrl.ListController)
+		v1.GET("/movies/:id", movieCtrl.GetController)
 	}
 
 	return r

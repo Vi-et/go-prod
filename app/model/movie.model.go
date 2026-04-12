@@ -48,3 +48,11 @@ func (m Movie) List(f *filters.MovieFilter, p *helpers.Pagination, s *helpers.Or
 	return movies, p.Metadata, nil
 
 }
+
+func (m Movie) Get(id string) (Movie, error) {
+	var movie Movie
+	if err := global.DB.Where("id = ?", id).First(&movie).Error; err != nil {
+		return movie, err
+	}
+	return movie, nil
+}

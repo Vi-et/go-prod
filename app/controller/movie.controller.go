@@ -35,12 +35,26 @@ func (mc *MovieController) ListController(c *gin.Context) {
 	metadata, movies, err := model.Movie{}.List(&f, &p, &o)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
-
+		return
 	}
 
 	// 5. Trả về kết quả JSON kèm metadata
 	c.JSON(http.StatusOK, gin.H{
 		"metadata": metadata,
 		"movies":   movies,
+	})
+}
+
+func (mc *MovieController) GetController(c *gin.Context) {
+	id := c.Param("id")
+
+	movie, err := model.Movie{}.Get(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"movie": movie,
 	})
 }

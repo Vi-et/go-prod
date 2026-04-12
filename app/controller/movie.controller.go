@@ -24,7 +24,9 @@ func (mc *MovieController) ListMovies(c *gin.Context) {
 	f := filters.MovieFilter{}
 	v := helpers.Validator{}
 	p := helpers.Pagination{}
+	s := helpers.Ordering{}
 	f.GetParams(c, &v)
+	s.GetParams(c, &v)
 	if !v.Valid() {
 		c.JSON(http.StatusBadRequest, gin.H{"error": v.Errors})
 		return
@@ -44,7 +46,7 @@ func (mc *MovieController) ListMovies(c *gin.Context) {
 	}
 
 	// 4. Truy vấn dữ liệu với phân trang
-	if err := query.Limit(p.PageSize).Offset(p.Offset).Find(&movies).Error; err != nil {
+	if err := query.Limit(p.PageSize).Offset(p.Offset).Order(s.Order).Find(&movies).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "không thể lấy danh sách phim"})
 		return
 	}

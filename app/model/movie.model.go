@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"go-production/app/filters"
 	"go-production/app/helpers"
 	"go-production/global"
@@ -33,13 +34,16 @@ func (m Movie) List(f *filters.MovieFilter, p *helpers.Pagination, s *helpers.Or
 	query := global.DB.Model(&Movie{})
 	query = f.Apply(query)
 
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	// 3. Đếm tổng số bản ghi sau khi lọc
-	if err := query.Count(&totalRecords).Error; err != nil {
+	if err := query.WithContext(ctx).Count(&totalRecords).Error; err != nil {
 		return movies, metadata, err
 	}
 
 	// 4. Truy vấn dữ liệu với phân trang
-	if err := query.Limit(*p.PageSize).Offset(p.Offset).Order(s.Order).Find(&movies).Error; err != nil {
+	if err := query.WithContext(ctx).Limit(*p.PageSize).Offset(p.Offset).Order(s.Order).Find(&movies).Error; err != nil {
 		return movies, metadata, err
 	}
 
@@ -51,7 +55,9 @@ func (m Movie) List(f *filters.MovieFilter, p *helpers.Pagination, s *helpers.Or
 
 func (m Movie) Get(id string) (Movie, error) {
 	var movie Movie
-	if err := global.DB.Where("id = ?", id).First(&movie).Error; err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	if err := global.DB.WithContext(ctx).Where("id = ?", id).First(&movie).Error; err != nil {
 		return movie, err
 	}
 	return movie, nil

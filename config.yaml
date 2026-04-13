@@ -22,3 +22,7 @@ smtp:
 
 cors:
   trusted_origins: []
+
+jwt:
+  secret: "your-very-secure-secret-key"
+  expiration: 24h

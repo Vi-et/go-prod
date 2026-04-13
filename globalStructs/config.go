@@ -28,4 +28,9 @@ type Config struct {
 	CORS struct {
 		TrustedOrigins []string `mapstructure:"trusted_origins"`
 	} `mapstructure:"cors"`
+
+	JWT struct {
+		Secret     string `mapstructure:"secret"`
+		Expiration string `mapstructure:"expiration"`
+	} `mapstructure:"jwt"`
 }

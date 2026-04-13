@@ -9,8 +9,8 @@ db:
   max_idle_time: 15m
 
 limiter:
-  rps: 2
-  burst: 4
+  rps: 10
+  burst: 10
   enabled: true
 
 smtp:

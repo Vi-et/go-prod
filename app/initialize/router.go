@@ -11,6 +11,9 @@ import (
 func InitRouter() *gin.Engine {
 	r := gin.Default()
 
+	// Apply rate limit middleware
+	r.Use(middleware.RateLimitMiddleware())
+
 	// Apply metrics middleware
 	r.Use(middleware.MetricsMiddleware())
 

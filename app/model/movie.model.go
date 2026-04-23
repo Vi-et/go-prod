@@ -36,30 +36,49 @@ func (Movie) TableName() string {
 
 func (m Movie) List(f *filters.MovieFilter, p *helpers.Pagination, s *helpers.Ordering) ([]Movie, helpers.Metadata, error) {
 	var movies []Movie
-	var totalRecords int64
 	var metadata helpers.Metadata
 
 	// 2. Xây dựng câu lệnh query với filters
 	query := global.DB.Model(&Movie{})
 	query = f.Apply(query)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// 3. Đếm tổng số bản ghi sau khi lọc
-	if err := query.WithContext(ctx).Count(&totalRecords).Error; err != nil {
-		return movies, metadata, err
+	// 3. Áp dụng Keyset Pagination logic
+	if p.LastID > 0 {
+		query = query.Where("id > ?", p.LastID)
 	}
 
-	// 4. Truy vấn dữ liệu với phân trang
-	if err := query.WithContext(ctx).Limit(*p.PageSize).Offset(p.Offset).Order(s.Order).Find(&movies).Error; err != nil {
-		return movies, metadata, err
+	// 4. Truy vấn dữ liệu với chiến thuật Limit + 1
+	order := s.Order
+	if order == "" {
+		order = "id ASC"
 	}
 
-	p.CalculateMetadata(totalRecords)
+	// Lấy dư 1 bản ghi để kiểm tra xem còn trang sau không
+	limit := *p.PageSize + 1
+	if err := query.WithContext(ctx).Limit(limit).Order(order).Find(&movies).Error; err != nil {
+		return nil, metadata, err
+	}
+
+	// 5. Kiểm tra HasNext và xử lý kết quả
+	hasNext := false
+	var nextCursor int64
+
+	if len(movies) > *p.PageSize {
+		hasNext = true
+		movies = movies[:*p.PageSize] // Cắt bỏ bản ghi thứ n+1
+	}
+
+	if len(movies) > 0 {
+		nextCursor = movies[len(movies)-1].ID
+	}
+
+	p.CalculateMetadata(hasNext, nextCursor)
 
 	return movies, p.Metadata, nil
-
+}
 }
 
 func (m Movie) Get(id string) (Movie, error) {

@@ -9,7 +9,8 @@ import (
 )
 
 func InitRouter() *gin.Engine {
-	r := gin.Default()
+	r := gin.New()
+	r.Use(gin.Recovery())
 
 	// Apply rate limit middleware
 	r.Use(middleware.RateLimitMiddleware())
@@ -38,7 +39,7 @@ func InitRouter() *gin.Engine {
 		v1.GET("/movies", movieCtrl.ListController)
 		v1.GET("/movies/:id", movieCtrl.GetController)
 		v1.PATCH("/movies/:id", middleware.RequireAuthenticatedUser(), movieCtrl.UpdateController)
-		v1.POST("/movies", middleware.RequireAuthenticatedUser(), movieCtrl.CreateController)
+		v1.POST("/movies", movieCtrl.CreateController)
 	}
 
 	return r

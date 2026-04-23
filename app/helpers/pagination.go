@@ -2,50 +2,48 @@ package helpers
 
 import (
 	"math"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 type Metadata struct {
-	CurrentPage  int   `json:"current_page,omitempty"`
-	PageSize     int   `json:"page_size,omitempty"`
-	FirstPage    int   `json:"first_page,omitempty"`
-	LastPage     int   `json:"last_page,omitempty"`
-	TotalRecords int64 `json:"total_records,omitempty"`
+	PageSize   int   `json:"page_size"`
+	NextCursor int64 `json:"next_cursor,omitempty"`
+	HasNext    bool  `json:"has_next"`
 }
 
 type Pagination struct {
 	Page     *int
 	PageSize *int
 	Offset   int
+	LastID   int64
 	Metadata
 }
 
 func (p *Pagination) GetParams(c *gin.Context, v *Validator) {
-	p.Page = GetIntParam(c, v, "page")
 	p.PageSize = GetIntParam(c, v, "pageSize")
 
-	if p.Page == nil || *p.Page <= 0 {
-		defaultPage := 1
-		p.Page = &defaultPage
+	// Lấy last_id cho Keyset Pagination (Cursor)
+	lastIDStr := c.Query("last_id")
+	if lastIDStr != "" {
+		id, err := strconv.ParseInt(lastIDStr, 10, 64)
+		if err == nil {
+			p.LastID = id
+		}
 	}
+
 	if p.PageSize == nil || *p.PageSize <= 0 {
 		defaultPageSize := 10
 		p.PageSize = &defaultPageSize
 	}
-	p.Offset = (*p.Page - 1) * *p.PageSize
 }
 
-// CalculateMetadata giúp tính toán các thông số phân trang nhanh chóng
-func (p *Pagination) CalculateMetadata(totalRecords int64) {
-	if totalRecords == 0 {
-		return
-	}
+// CalculateMetadata cho kiểu Cursor-based (Limit + 1)
+func (p *Pagination) CalculateMetadata(hasNext bool, nextCursor int64) {
 	p.Metadata = Metadata{
-		CurrentPage:  *p.Page,
-		PageSize:     *p.PageSize,
-		FirstPage:    1,
-		LastPage:     int(math.Ceil(float64(totalRecords) / float64(*p.PageSize))),
-		TotalRecords: totalRecords,
+		PageSize:   *p.PageSize,
+		NextCursor: nextCursor,
+		HasNext:    hasNext,
 	}
 }

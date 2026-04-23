@@ -3,15 +3,15 @@ port: 4000
 env: production
 
 db:
-  dsn: postgres://greenlight:pa55word@localhost/greenlight?sslmode=disable
-  max_open_conns: 25
-  max_idle_conns: 25
+  dsn: postgres://greenlight:pa55word@db/greenlight?sslmode=disable
+  max_open_conns: 100
+  max_idle_conns: 100
   max_idle_time: 15m
 
 limiter:
   rps: 10
   burst: 10
-  enabled: true
+  enabled: false
 
 smtp:
   host: smtp.mailtrap.io

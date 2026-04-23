@@ -1,7 +1,6 @@
 package helpers
 
 import (
-	"math"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -14,9 +13,7 @@ type Metadata struct {
 }
 
 type Pagination struct {
-	Page     *int
 	PageSize *int
-	Offset   int
 	LastID   int64
 	Metadata
 }

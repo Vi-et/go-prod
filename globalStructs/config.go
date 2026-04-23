@@ -5,10 +5,11 @@ type Config struct {
 	Env  string `mapstructure:"env"`
 
 	DB struct {
-		DSN          string `mapstructure:"dsn"`
-		MaxOpenConns int    `mapstructure:"max_open_conns"`
-		MaxIdleConns int    `mapstructure:"max_idle_conns"`
-		MaxIdleTime  string `mapstructure:"max_idle_time"`
+		DSN          string   `mapstructure:"dsn"`
+		Replicas     []string `mapstructure:"replicas"`
+		MaxOpenConns int      `mapstructure:"max_open_conns"`
+		MaxIdleConns int      `mapstructure:"max_idle_conns"`
+		MaxIdleTime  string   `mapstructure:"max_idle_time"`
 	} `mapstructure:"db"`
 
 	Limiter struct {

@@ -9,41 +9,41 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"gorm.io/plugin/dbresolver"
 )
 
 func InitPostgres() {
 	cfg := global.Cfg.DB
 
+	// 1. Kết nối vào Master (Primary)
 	db, err := gorm.Open(postgres.Open(cfg.DSN), &gorm.Config{
-		// Hiện log query khi đang dev, tắt log khi production
 		Logger: resolveGormLogger(),
 	})
 	if err != nil {
-		panic(fmt.Errorf("không kết nối được PostgreSQL: %w", err))
+		panic(fmt.Errorf("không kết nối được Master DB: %w", err))
 	}
 
-	// Lấy underlying *sql.DB để cấu hình connection pool
-	sqlDB, err := db.DB()
+	// 2. Cấu hình DBResolver cho nhiều Replicas (Read-only)
+	var replicas []gorm.Dialector
+	for _, dsn := range cfg.Replicas {
+		replicas = append(replicas, postgres.Open(dsn))
+	}
+
+	duration, _ := time.ParseDuration(cfg.MaxIdleTime)
+	err = db.Use(dbresolver.Register(dbresolver.Config{
+		Replicas: replicas,
+		Policy:   dbresolver.RandomPolicy{}, // Tự động load balance ngẫu nhiên giữa các Slave
+	}).
+		SetMaxOpenConns(cfg.MaxOpenConns).
+		SetMaxIdleConns(cfg.MaxIdleConns).
+		SetConnMaxIdleTime(duration))
+
 	if err != nil {
-		panic(fmt.Errorf("không lấy được sql.DB từ GORM: %w", err))
-	}
-
-	sqlDB.SetMaxOpenConns(cfg.MaxOpenConns)
-	sqlDB.SetMaxIdleConns(cfg.MaxIdleConns)
-
-	duration, err := time.ParseDuration(cfg.MaxIdleTime)
-	if err != nil {
-		panic(fmt.Errorf("max_idle_time không hợp lệ: %w", err))
-	}
-	sqlDB.SetConnMaxIdleTime(duration)
-
-	// Kiểm tra kết nối thực sự
-	if err = sqlDB.Ping(); err != nil {
-		panic(fmt.Errorf("không ping được PostgreSQL: %w", err))
+		panic(fmt.Errorf("không cấu hình được DBResolver: %w", err))
 	}
 
 	global.DB = db
-	global.Logger.Info("PostgreSQL connected via GORM")
+	global.Logger.Info("PostgreSQL Read/Write Splitting enabled")
 }
 
 // resolveGormLogger chọn log level phù hợp theo môi trường

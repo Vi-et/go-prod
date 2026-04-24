@@ -12,12 +12,14 @@ func InitializeApp() {
 
 	// 2. Init Logger → global.Logger
 	InitLogger()
-	global.Logger.Info("Logger initialized")
 
 	// 3. Init Database → global.DB
 	InitPostgres()
 
-	// 4. Init Router và chạy server
+	// 4. Init Redis → global.Redis
+	InitRedis()
+
+	// 5. Init Router và chạy server
 	r := InitRouter()
 
 	addr := fmt.Sprintf(":%d", global.Cfg.Port)

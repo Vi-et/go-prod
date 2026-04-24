@@ -6,8 +6,8 @@ db:
   dsn: postgres://greenlight:pa55word@db-primary:5432/greenlight?sslmode=disable
   replicas:
     - postgres://greenlight:pa55word@db-replica-1:5432/greenlight?sslmode=disable
-  max_open_conns: 100
-  max_idle_conns: 100
+  max_open_conns: 500
+  max_idle_conns: 500
   max_idle_time: 15m
 
 limiter:
@@ -28,3 +28,14 @@ cors:
 jwt:
   secret: "your-very-secure-secret-key"
   expiration: 24h
+
+redis:
+  addr: "redis:6379"
+  password: ""
+  db: 0
+  pool_size: 500
+  min_idle_conns: 50
+  dial_timeout: "3s"
+  read_timeout: "1s"
+  write_timeout: "1s"
+  cache_ttl: "5m"

@@ -10,6 +10,8 @@ services:
     depends_on:
       db-primary:
         condition: service_healthy
+      redis:
+        condition: service_started
     networks:
       - app-network
 
@@ -22,6 +24,13 @@ services:
       - POSTGRESQL_REPLICATION_MODE=master
       - POSTGRESQL_REPLICATION_USER=repl_user
       - POSTGRESQL_REPLICATION_PASSWORD=repl_password
+      - POSTGRESQL_SHARED_BUFFERS=1GB
+      - POSTGRESQL_MAX_CONNECTIONS=1000
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
     ports:
       - "5432:5432"
     volumes:
@@ -47,14 +56,37 @@ services:
       - POSTGRESQL_USERNAME=greenlight
       - POSTGRESQL_PASSWORD=pa55word
       - POSTGRESQL_DATABASE=greenlight
+      - POSTGRESQL_SHARED_BUFFERS=1GB
+      - POSTGRESQL_MAX_CONNECTIONS=1000
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 4G
     ports:
       - "5433:5432"
     networks:
       - app-network
 
+  redis:
+    image: redis:7-alpine
+    command: >
+      redis-server
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --save ""
+      --appendonly no
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          memory: 600M
+
 volumes:
   postgres_master_data:
-
 
 networks:
   app-network:

@@ -4,6 +4,8 @@ import (
 	"go-production/globalStructs"
 	"log/slog"
 
+	"github.com/redis/go-redis/v9"
+
 	"gorm.io/gorm"
 )
 
@@ -16,4 +18,6 @@ var (
 
 	// Logger là structured logger dùng slog (Go 1.21+)
 	Logger *slog.Logger
+
+	Redis *redis.Client
 )

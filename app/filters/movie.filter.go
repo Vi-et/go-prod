@@ -3,8 +3,9 @@ package filters
 import (
 	"go-production/app/helpers"
 
+	"strings"
+
 	"github.com/gin-gonic/gin"
-	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -35,7 +36,9 @@ func (f *MovieFilter) Apply(db *gorm.DB) *gorm.DB {
 		db = db.Where("to_tsvector('simple', title) @@ plainto_tsquery('simple', ?)", f.Title)
 	}
 	if f.Genres != "" {
-		db = db.Where("genres @> ?", pq.Array(f.Genres))
+		genres := strings.Split(f.Genres, ",")
+		genresFormatted := "{" + strings.Join(genres, ",") + "}"
+		db = db.Where("genres @> ?", genresFormatted)
 	}
 	if f.Year != nil {
 		db = db.Where("year = ?", f.Year)

@@ -34,4 +34,16 @@ type Config struct {
 		Secret     string `mapstructure:"secret"`
 		Expiration string `mapstructure:"expiration"`
 	} `mapstructure:"jwt"`
+
+	Redis struct {
+		Addr          string `mapstructure:"addr"`
+		Password      string `mapstructure:"password"`
+		DB            int    `mapstructure:"db"`
+		PoolSize      int    `mapstructure:"pool_size"`
+		MinIdleConns  int    `mapstructure:"min_idle_conns"`
+		DialTimeout   string `mapstructure:"dial_timeout"`
+		ReadTimeout   string `mapstructure:"read_timeout"`
+		WriteTimeout  string `mapstructure:"write_timeout"`
+		CacheTTL      string `mapstructure:"cache_ttl"`
+	}
 }
